@@ -142,9 +142,11 @@ app.controller("mainController", function ($scope, $http, $sce, $q, $timeout, pr
   };
 
   $scope.applyTemplate = function(discussion, template) {
+    var author = "";
     var customerComments = _.filter(discussion.comments, function (c) { return !c.user_is_supporter; });
-    console.log(customerComments);
-    var author = customerComments[customerComments.length - 1].author_name;
+    if (customerComments.length > 0) {
+      author = customerComments[customerComments.length - 1].author_name;
+    }
 
     var spaceIndex = author.indexOf(" ");
     if (spaceIndex > 0) {
