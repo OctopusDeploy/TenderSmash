@@ -211,7 +211,7 @@ app.controller("mainController", function ($scope, $http, $sce, $q, $timeout, pr
         if (data.comments_count !== discussion.comments_count) {
           errorManager.setError("Someone else has commented on this item.");
         } else {
-          $http.post(discussion.href, { body: discussion.reply, skip_spam: true })
+          $http.post(discussion.href + "/comments", { body: discussion.reply, skip_spam: true })
             .success(function(x) {
               $scope.hide(discussion);
             });
