@@ -1,0 +1,14 @@
+{
+  "name": "tender-smash",
+  "version": "0.0.0",
+  "description": "Better Tender UI",
+  "main": "main.js",
+  "author": "Paul",
+  "dependencies": {
+    "express": "~4.2.0",
+    "body-parser": "~1.2.0",
+    "superagent": "~0.18.0",
+    "cookie-parser": "~1.1.0",
+    "node-logentries": "~0.1.4"
+  }
+}

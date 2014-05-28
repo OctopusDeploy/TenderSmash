@@ -1,0 +1,150 @@
+<!doctype html>
+
+<!-- ASSIGN OUR ANGULAR MODULE -->
+<html ng-app="tenderSmash">
+<head>
+  <!-- META -->
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1"><!-- Optimize mobile viewport -->
+
+  <title>Tender Smash!</title>
+
+  <link rel="stylesheet" href="http://getbootstrap.com/dist/css/bootstrap.min.css">
+  <link rel="stylesheet" href="/vendor/loading-bar.min.css">
+
+  <script src="//ajax.googleapis.com/ajax/libs/jquery/2.0.3/jquery.min.js"></script><!-- load jquery -->
+  <script src="//netdna.bootstrapcdn.com/bootstrap/3.1.1/js/bootstrap.min.js"></script>
+  <script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.2.16/angular.min.js"></script><!-- load angular -->
+  <script src="http://underscorejs.org/underscore-min.js"></script>
+  <script src="http://madapaja.github.io/jquery.selection/src/jquery.selection.js"></script>
+  <script src="http://momentjs.com/downloads/moment.min.js"></script>
+  <script src="/vendor/loading-bar.min.js"></script>
+  <script src="/vendor/localstorageservice.min.js"></script>
+  <script src="/app/app.js"></script>
+</head>
+
+<body ng-controller="mainController">
+
+<div>
+
+  <div class="navbar navbar-default">
+    <div class="navbar-header">
+      <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".navbar-responsive-collapse">
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+      </button>
+      <a class="navbar-brand" href="#">Tender Smash!</a>
+    </div>
+    <div class="navbar-collapse collapse navbar-responsive-collapse">
+      <ul class="nav navbar-nav">
+        <li ng-repeat="list in lists" ng-class="{active: currentList == list}"><a href="" ng-click="selectList(list)">{{ list.name }} <span class="badge">{{ list.discussions.length }}</span></a></li>
+      </ul>
+      <ul class="nav navbar-nav navbar-right">
+        <li ng-show="profileManager.hasProfile"><a href="" ng-click="toggleEditProfile()">{{ profile.name }}</a></li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="container-fluid">
+
+    <div class="row">
+      <div class="col-md-12">
+        <div class="alert alert-dismissable alert-danger" ng-show="errorManager.error">
+          <button type="button" class="close" ng-click="errorManager.clear()" data-dismiss="alert">×</button>
+          <strong>Oh snap!</strong> {{errorManager.error}}
+        </div>
+      </div>
+    </div>
+
+    <div class="row" ng-show="editProfile">
+      <div class="col-md-12">
+        <div class="well bs-component">
+          <form class="form-horizontal">
+            <fieldset>
+              <legend ng-hide="profileManager.hasProfile">Welcome to TenderSmash!</legend>
+              <p ng-hide="profileManager.hasProfile">We just need some basic information to connect to Tender.</p>
+              <div class="form-group">
+                <label for="inputName" class="col-lg-2 control-label">Your first name:</label>
+                <div class="col-lg-10">
+                  <input type="text" class="form-control" id="inputName" placeholder="Mary" ng-model="profile.name" />
+                </div>
+              </div>
+              <div class="form-group">
+                <label for="inputKey" class="col-lg-2 control-label">Tender API key:</label>
+                <div class="col-lg-10">
+                  <input type="password" class="form-control" id="inputKey" placeholder="123abc456..." ng-model="profile.tenderKey" />
+                  <p class="help-block">
+                    Log in to your Tender site, go to your profile, then Edit Profile. Look for the API Key field at the bottom of the page.
+                  </p>
+                </div>
+              </div>
+              <div class="form-group">
+                <label for="inputUrl" class="col-lg-2 control-label">Tender URL prefix:</label>
+                <div class="col-lg-10">
+                  <input type="text" class="form-control" id="inputUrl" placeholder="yoursite" ng-model="profile.tenderUri"/>
+                  <p class="help-block">
+                    The short part of your Tender URL. E.g., for <code>http://octopus-deploy.tenderapp.com/</code>, use <code>octopus-deploy</code>.
+                  </p>
+                </div>
+              </div>
+              <div class="form-group">
+                <div class="col-lg-10 col-lg-offset-2">
+                  <button type="submit" class="btn btn-primary" ng-click="saveAndReloadProfile()">Save</button>
+                </div>
+              </div>
+            </fieldset>
+          </form>
+          <div id="source-button" class="btn btn-primary btn-xs" style="display: none;">&lt; &gt;</div></div>
+      </div>
+    </div>
+
+    <div class="row" ng-show="profileManager.hasProfile">
+      <div class="col-md-3">
+        <div>
+          <a ng-repeat="discussion in currentList.discussions" href="javascript:void(0)" ng-click="selectDiscussion(discussion)" class="discussion-summary list-group-item" ng-class="{active: currentDiscussion==discussion}">
+            <span class="badge">{{discussion.comments_count}}</span>
+            <p>{{ discussion.title }}</p>
+            <h6><small>{{discussion.author_name }}<br />{{discussion.author_email }}<br/>{{ discussion.created_at | moment }}</small></h6>
+          </a>
+        </div>
+      </div>
+
+      <div class="col-md-9">
+        <div ng-show="currentDiscussion" class="current-discussion">
+          <div class="panel panel-primary">
+            <div class="panel-heading">
+              <h3 class="panel-title">Reply <small> <a style="margin-left: 10px; color: #e1f1ff" href="" ng-repeat="(k,v) in templates" ng-click="changeTemplate(currentDiscussion, v)">{{k}}</a>  <a style="margin-left: 20px; color: #ebf6ff" target="_blank" href="{{ currentDiscussion.html_href }}">View full post</a></small> </h3>
+            </div>
+            <div class="panel-body">
+              <div>
+                <textarea id="reply_box" class="form-control" rows="10" ng-model="currentDiscussion.reply"></textarea>
+              </div>
+
+              <div style="margin-top: 10px">
+                <button class="btn btn-success" ng-click="reply(currentDiscussion)">Reply</button>
+                <button class="btn btn-primary" ng-click="ack(currentDiscussion)">Acknowledge</button>
+              </div>
+            </div>
+          </div>
+
+          <div ng-repeat="comment in currentDiscussion.comments | reverse" class="comment">
+
+            <div class="panel" ng-class="{ 'panel-default': !comment.user_is_supporter, 'panel-success': comment.user_is_supporter, 'panel-warning': comment.internal }">
+              <div class="panel-heading">{{comment.author_name}} <small class="text-info" ng-show="!comment.user_is_supporter">{{ comment.author_email }}</small> <small class="text-info" ng-show="comment.internal">(internal)</small> <small>{{ comment.created_at | moment }}</small> <small style="float: right" ng-click="comment.showPlain = !comment.showPlain">Toggle plain text</small></div>
+              <div class="panel-body">
+                <div ng-hide="comment.showPlain" ng-bind-html="comment.html"></div>
+                <pre ng-show="comment.showPlain">{{comment.body}}</pre>
+              </div>
+            </div>
+
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+</body>
+</html>
