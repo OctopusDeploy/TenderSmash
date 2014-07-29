@@ -64,7 +64,9 @@ app.factory("errorManager", function () {
 app.factory('tenderRequestInterceptor', function($q, errorManager, profileManager) {
   return {
     'request': function(config) {
-      config.url = config.url.replace("http://api.tenderapp.com", "/proxy");
+      config.url = config.url.replace("http://api.tenderapp.com", "/proxy")
+        .replace("https://api.tenderapp.com:443", "/proxy")
+        .replace("https://api.tenderapp.com", "/proxy");
       config.headers["X-Tender-Auth"] = profileManager.profile.tenderKey;
       return config;
     },
@@ -90,6 +92,15 @@ app.controller("mainController", function ($scope, $http, $sce, $q, $timeout, pr
 	$scope.editProfile = false;
   $scope.errorManager = errorManager;
   $scope.lists = {};
+  $scope.smashStats = {
+    total: 0,
+    smashed: 0,
+    smashedPercentage: 0,
+    smash: function() {
+      $scope.smashStats.smashed = $scope.smashStats.smashed + 1;
+      $scope.smashStats.smashedPercentage = ($scope.smashStats.smashed / $scope.smashStats.total) * 100.00;
+    }
+  };
 
   $scope.toggleEditProfile = function() {
     $scope.editProfile = !$scope.editProfile;
@@ -186,6 +197,8 @@ app.controller("mainController", function ($scope, $http, $sce, $q, $timeout, pr
       }
     });
 
+    $scope.smashStats.smash();
+
     if ($scope.currentDiscussion == discussion) {
       $scope.currentDiscussion = null;
     }
@@ -219,6 +232,21 @@ app.controller("mainController", function ($scope, $http, $sce, $q, $timeout, pr
       });
   };
 
+  $scope.assign = function(discussion) {
+    if (discussion.queue_id != "") {
+      $http.post(discussion.href + "/queue?queue=" + discussion.queue_id, "")
+        .success(function(x) {
+          $scope.smashStats.smash();
+        });
+    }
+    else {
+      $http.post(discussion.href + "/unqueue?queue=" + discussion.queue_id, "")
+        .success(function(x) {
+          $scope.smashStats.smash();
+        });
+    }
+  };
+
   $scope.reload = function() {
     $scope.currentDiscussion = null;
     $scope.currentList = null;
@@ -230,44 +258,64 @@ app.controller("mainController", function ($scope, $http, $sce, $q, $timeout, pr
       return;
     }
 
-    $http.get('http://api.tenderapp.com/' + profileManager.profile.tenderUri + '/discussions/pending')
-      .success(function(pendingDiscussionListing) {
-        $scope.editProfile = false;
-
-        $http.get('http://api.tenderapp.com/' + profileManager.profile.tenderUri + '/categories')
-          .success(function (categoriesResponse) {
-
-            _.each(categoriesResponse.categories, function (category) {
-              $scope.lists[category.href] = {
-                discussions: [],
-                name: category.name
-              };
+    $http.get('https://api.tenderapp.com/' + profileManager.profile.tenderUri + '/queues')
+      .success(function (queues) {
+        $http.get('https://api.tenderapp.com/' + profileManager.profile.tenderUri + '/discussions/pending')
+          .success(function(pendingDiscussionListing) {
+            $scope.editProfile = false;
+            $scope.queues = queues;
+            console.log(queues);
+            console.log(queues.named_queues);
+            _.each(queues.named_queues, function (q) {
+              console.log(q);
+              q.id = q.href.substring(q.href.lastIndexOf('/') + 1);
             });
 
-            var promises = [];
-            _.each(pendingDiscussionListing.discussions, function (discus) {
-              promises.push($http.get(discus.href).success(function (data) { return data; }));
-            });
+            $http.get('https://api.tenderapp.com/' + profileManager.profile.tenderUri + '/categories')
+              .success(function (categoriesResponse) {
 
-            $q.all(promises).then(function (discussions) {
-              var firstList = null;
-              _.each(discussions, function (response) {
-                var data = response.data;
-                $scope.applyTemplate(data);
+                _.each(categoriesResponse.categories, function (category) {
+                  $scope.lists[category.href] = {
+                    discussions: [],
+                    name: category.name
+                  };
+                });
 
-                _.each(data.comments, function (c) { c.html = $sce.trustAsHtml(c.formatted_body); });
+                var promises = [];
+                _.each(pendingDiscussionListing.discussions, function (discus) {
+                  promises.push($http.get(discus.href).success(function (data) { return data; }));
+                });
 
-                $scope.lists[data.category_href].discussions.push(data);
+                $q.all(promises).then(function (discussions) {
+                  var firstList = null;
+                  _.each(discussions, function (response) {
+                    var data = response.data;
+                    $scope.applyTemplate(data);
 
-                if (!firstList) {
-                  firstList = $scope.lists[data.category_href];
-                }
+                    _.each(data.comments, function (c) { c.html = $sce.trustAsHtml(c.formatted_body); });
+
+                    $scope.lists[data.category_href].discussions.push(data);
+
+                    if (data.cached_queue_list.length > 0) {
+                      data.queue_id = data.cached_queue_list[data.cached_queue_list.length - 1];
+                    } else {
+                      data.queue_id = "";
+                    }
+
+                    if (!firstList) {
+                      firstList = $scope.lists[data.category_href];
+                    }
+                  });
+
+                  $scope.smashStats.smashed = 0;
+                  $scope.smashStats.smashedPercentage = 0;
+                  $scope.smashStats.total = discussions.length;
+
+                  if (firstList) {
+                    $scope.selectList(firstList);
+                  }
+                });
               });
-
-              if (firstList) {
-                $scope.selectList(firstList);
-              }
-            });
           });
       });
   };

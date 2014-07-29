@@ -21,13 +21,18 @@
   <script src="/vendor/loading-bar.min.js"></script>
   <script src="/vendor/localstorageservice.min.js"></script>
   <script src="/tendersmash.js"></script>
+  <style type="text/css">
+    body {
+      padding-top: 70px;
+    }
+  </style>
 </head>
 
 <body ng-controller="mainController">
 
 <div>
 
-  <div class="navbar navbar-default">
+  <div class="navbar navbar-default navbar-fixed-top">
     <div class="navbar-header">
       <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".navbar-responsive-collapse">
         <span class="icon-bar"></span>
@@ -43,6 +48,14 @@
       <ul class="nav navbar-nav navbar-right">
         <li ng-show="profileManager.hasProfile"><a href="" ng-click="toggleEditProfile()">{{ profile.name }}</a></li>
       </ul>
+
+      <div style="margin-top: 15px; height: 20px" class="navbar-right">
+        <div class="progress" style="width: 300px">
+          <div class="progress-bar progress-bar-success progress-bar-striped active" role="progressbar" aria-valuenow="{{ smashStats.smashedPercentage }}" aria-valuemin="0" aria-valuemax="100" style="width: {{ smashStats.smashedPercentage }}%">
+            <span class="sr-only">{{ smashStats.smashedPercentage }}% Complete (success)</span>
+          </div>
+        </div>
+      </div>
     </div>
   </div>
 
@@ -112,9 +125,27 @@
 
       <div class="col-md-9">
         <div ng-show="currentDiscussion" class="current-discussion">
-          <div class="panel panel-primary">
+          <div class="panel panel-primary" style="background: #d9edf7">
             <div class="panel-heading">
-              <h3 class="panel-title">Reply <small> <a style="margin-left: 10px; color: #e1f1ff" href="" ng-repeat="(k,v) in templates" ng-click="changeTemplate(currentDiscussion, v)">{{k}}</a>  <a style="margin-left: 20px; color: #ebf6ff" target="_blank" href="{{ currentDiscussion.html_href }}">View full post</a></small> </h3>
+              <h3 class="panel-title">Reply
+                <span style="color: #ebf6ff; margin-left: 10px; margin-right: 10px">
+                  <span ng-show="currentDiscussion.public">
+                    <span class="glyphicon glyphicon-globe"></span>
+                    Public Discussion
+                  </span>
+                  <span ng-hide="currentDiscussion.public">
+                    <span class="glyphicon glyphicon-eye-close"></span>
+                    Private Discussion
+                  </span>
+                </span>
+
+                <a style="margin-left: 5px; color: #ebf6ff" target="_blank" href="{{ currentDiscussion.html_href }}">View full post</a>
+
+                <small>
+                  <a style="margin-left: 10px; color: #e1f1ff" href="" ng-repeat="(k,v) in templates" ng-click="changeTemplate(currentDiscussion, v)">{{k}}</a>
+                </small>
+
+              </h3>
             </div>
             <div class="panel-body">
               <div>
@@ -122,8 +153,18 @@
               </div>
 
               <div style="margin-top: 10px">
-                <button class="btn btn-success" ng-click="reply(currentDiscussion)">Reply</button>
-                <button class="btn btn-primary" ng-click="ack(currentDiscussion)">Acknowledge</button>
+                <div style="float: left">
+                  <button class="btn btn-success" ng-click="reply(currentDiscussion)">Reply</button>
+                  <button class="btn btn-primary" ng-click="ack(currentDiscussion)">Acknowledge</button>
+                </div>
+
+                <div style="text-align: right">
+                  <select ng-model="currentDiscussion.queue_id">
+                    <option value="">(Unassigned)</option>
+                    <option ng-repeat="queue in queues.named_queues" value="{{queue.id}}">{{ queue.name }}</option>
+                  </select>
+                  <button class="btn btn-primary" ng-click="assign(currentDiscussion)">Assign</button>
+                </div>
               </div>
             </div>
           </div>
@@ -133,8 +174,14 @@
             <div class="panel" ng-class="{ 'panel-default': !comment.user_is_supporter, 'panel-success': comment.user_is_supporter, 'panel-warning': comment.internal }">
               <div class="panel-heading">{{comment.author_name}} <small class="text-info" ng-show="!comment.user_is_supporter">{{ comment.author_email }}</small> <small class="text-info" ng-show="comment.internal">(internal)</small> <small>{{ comment.created_at | moment }}</small> <small style="float: right" ng-click="comment.showPlain = !comment.showPlain">Toggle plain text</small></div>
               <div class="panel-body">
+                <div ng-show="comment.assets">
+                  Attachments: <span style="margin-left: 10px" ng-repeat="ass in comment.assets"><a href="{{comment.html_href}}{{ass.download_path}}">{{ ass.filename }}</a></span>
+                  <hr />
+                </div>
+
                 <div ng-hide="comment.showPlain" ng-bind-html="comment.html"></div>
                 <pre ng-show="comment.showPlain">{{comment.body}}</pre>
+
               </div>
             </div>
 

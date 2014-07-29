@@ -19,11 +19,13 @@ app.use(cookieParser());
 app.use(express.static(__dirname + '/' + pub));
 
 var proxyTenderRequest = function(method, expressRequest) {
-  var url = expressRequest.params[0];
+  var url = expressRequest.originalUrl;
   url = url.replace("/proxy/", "/");
   if (url.indexOf("/") !== 0) {
     url = "/" + url;
   }
+
+  console.log(url);
 
   if (url.indexOf("/pending") > 0) {
     log.info("Proxy request to Tender URL: ", url);
@@ -55,12 +57,18 @@ app.route("/proxy/*")
     }
 
     proxyTenderRequest("post", req)
-      .send(body)
       .set("Content-Length", body.length)
+      .send(body)
 			.end(function(tres) {
 				if (tres.ok) {
-					var data = JSON.parse(tres.text);
-					res.json(data);					
+          console.log("about to parse: '" + tres.text + "'");
+
+          try {
+            var data = JSON.parse(tres.text);
+            res.json(data);
+          } catch (e) {
+            res.json(tres.text);
+          }
 				} else {
 					res.send(tres.status, { error: tres.text });
 				}
