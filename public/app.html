@@ -26,6 +26,21 @@
       padding-top: 70px;
     }
   </style>
+  <script type="text/javascript">
+    var confirmOnPageExit = function (e)
+    {
+      e = e || window.event;
+
+      var message = "Nooo, don't leave me";
+      if (e)
+      {
+        e.returnValue = message;
+      }
+      return message;
+    };
+
+    window.onbeforeunload = confirmOnPageExit;
+  </script>
 </head>
 
 <body ng-controller="mainController">
@@ -47,6 +62,7 @@
       </ul>
       <ul class="nav navbar-nav navbar-right">
         <li ng-show="profileManager.hasProfile"><a href="" ng-click="toggleEditProfile()">{{ profile.name }}</a></li>
+        <li ng-show="profileManager.hasProfile"><a href="" ng-click="toggleSummary()">Summary</a></li>
       </ul>
 
       <div style="margin-top: 15px; height: 20px" class="navbar-right">
@@ -109,6 +125,14 @@
             </fieldset>
           </form>
           <div id="source-button" class="btn btn-primary btn-xs" style="display: none;">&lt; &gt;</div></div>
+      </div>
+    </div>
+
+    <div class="row">
+      <div class="col-md-12">
+        <div class="alert alert-success" ng-show="showSummary">
+          <textarea style="width: 100%" rows="40">{{ getSummary() }}</textarea>
+        </div>
       </div>
     </div>
 
@@ -175,7 +199,7 @@
               <div class="panel-heading">{{comment.author_name}} <small class="text-info" ng-show="!comment.user_is_supporter">{{ comment.author_email }}</small> <small class="text-info" ng-show="comment.internal">(internal)</small> <small>{{ comment.created_at | moment }}</small> <small style="float: right" ng-click="comment.showPlain = !comment.showPlain">Toggle plain text</small></div>
               <div class="panel-body">
                 <div ng-show="comment.assets">
-                  Attachments: <span style="margin-left: 10px" ng-repeat="ass in comment.assets"><a href="{{comment.html_href}}{{ass.download_path}}">{{ ass.filename }}</a></span>
+                  Attachments: <span style="margin-left: 10px" ng-repeat="ass in comment.assets"><a href="{{comment.html_href}}{{ass.download_path}}" target="_blank">{{ ass.filename }}</a></span>
                   <hr />
                 </div>
 

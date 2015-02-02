@@ -92,6 +92,7 @@ app.controller("mainController", function ($scope, $http, $sce, $q, $timeout, pr
 	$scope.editProfile = false;
   $scope.errorManager = errorManager;
   $scope.lists = {};
+  $scope.showSummary = false;
   $scope.smashStats = {
     total: 0,
     smashed: 0,
@@ -104,6 +105,22 @@ app.controller("mainController", function ($scope, $http, $sce, $q, $timeout, pr
 
   $scope.toggleEditProfile = function() {
     $scope.editProfile = !$scope.editProfile;
+  };
+
+  $scope.toggleSummary = function() {
+    $scope.showSummary = !$scope.showSummary;
+  };
+
+  $scope.getSummary = function() {
+    var lines = [];
+    _.each($scope.lists, function (l) {
+      lines.push(l.name + ": " + l.discussions.length + " assigned");
+      _.each(l.discussions, function (d) {
+        lines.push(" - " + d.html_href + " " + d.title);
+      });
+    });
+
+    return lines.join("\r\n");
   };
 
   $scope.saveAndReloadProfile = function() {
@@ -266,20 +283,24 @@ app.controller("mainController", function ($scope, $http, $sce, $q, $timeout, pr
             $scope.queues = queues;
             console.log(queues);
             console.log(queues.named_queues);
+
+            $scope.lists['00nil'] = {
+              discussions: [],
+              name: 'Unassigned'
+            };
+
             _.each(queues.named_queues, function (q) {
               console.log(q);
               q.id = q.href.substring(q.href.lastIndexOf('/') + 1);
+
+              $scope.lists[q.id] = {
+                discussions: [],
+                name: q.name
+              };
             });
 
             $http.get('https://api.tenderapp.com/' + profileManager.profile.tenderUri + '/categories')
               .success(function (categoriesResponse) {
-
-                _.each(categoriesResponse.categories, function (category) {
-                  $scope.lists[category.href] = {
-                    discussions: [],
-                    name: category.name
-                  };
-                });
 
                 var promises = [];
                 _.each(pendingDiscussionListing.discussions, function (discus) {
@@ -294,16 +315,17 @@ app.controller("mainController", function ($scope, $http, $sce, $q, $timeout, pr
 
                     _.each(data.comments, function (c) { c.html = $sce.trustAsHtml(c.formatted_body); });
 
-                    $scope.lists[data.category_href].discussions.push(data);
-
                     if (data.cached_queue_list.length > 0) {
                       data.queue_id = data.cached_queue_list[data.cached_queue_list.length - 1];
                     } else {
                       data.queue_id = "";
                     }
 
+                    data.list_id = (data.queue_id ? data.queue_id : "00nil");
+                    $scope.lists[data.list_id].discussions.push(data);
+
                     if (!firstList) {
-                      firstList = $scope.lists[data.category_href];
+                      firstList = $scope.lists[data.list_id];
                     }
                   });
 
