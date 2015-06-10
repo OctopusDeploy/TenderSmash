@@ -1,4 +1,8 @@
-var app = angular.module('tenderSmash', ['chieffancypants.loadingBar', 'LocalStorageModule']);
+var app = angular.module('tenderSmash', ['chieffancypants.loadingBar', 'LocalStorageModule'])
+  .config(['cfpLoadingBarProvider', function(cfpLoadingBarProvider) {
+    cfpLoadingBarProvider.includeSpinner = false;
+  }]);
+
 
 $.fn.selectRange = function(start, end) {
   var e = document.getElementById($(this).attr('id'));
@@ -140,7 +144,7 @@ app.controller("mainController", function ($scope, $http, $sce, $q, $timeout, pr
 		if ($scope.currentList.discussions.length) {
 			$scope.currentDiscussion = $scope.currentList.discussions[0];
 		} else {
-			$scope.currentDiscussion = null;			
+			$scope.currentDiscussion = null;
 		}
 	};
 
@@ -268,11 +272,20 @@ app.controller("mainController", function ($scope, $http, $sce, $q, $timeout, pr
     $scope.currentDiscussion = null;
     $scope.currentList = null;
     $scope.lists = {};
+    $scope.unassignedList = {};
+    $scope.myList = {};
+    $scope.profileId = null;
+    $scope.isListsPopulated = false;
 
     profileManager.load();
     if (!profileManager.hasProfile) {
       $scope.editProfile = true;
       return;
+    } else {
+      $http.get('https://api.tenderapp.com/' + profileManager.profile.tenderUri + '/profile')
+        .success(function(profile) {
+          profileManager.profile.id = profile.href.substring(profile.href.lastIndexOf('/') + 1);
+        });
     }
 
     $http.get('https://api.tenderapp.com/' + profileManager.profile.tenderUri + '/queues')
@@ -284,7 +297,8 @@ app.controller("mainController", function ($scope, $http, $sce, $q, $timeout, pr
             console.log(queues);
             console.log(queues.named_queues);
 
-            $scope.lists['00nil'] = {
+            $scope.unassignedList = {
+              id: '00nil',
               discussions: [],
               name: 'Unassigned'
             };
@@ -293,11 +307,21 @@ app.controller("mainController", function ($scope, $http, $sce, $q, $timeout, pr
               console.log(q);
               q.id = q.href.substring(q.href.lastIndexOf('/') + 1);
 
-              $scope.lists[q.id] = {
-                discussions: [],
-                name: q.name
-              };
+              if(q.user_id == profileManager.profile.id) {
+                $scope.myList = {
+                  id: q.id,
+                  discussions: [],
+                  name: q.name
+                };
+              } else {
+                $scope.lists[q.id] = {
+                  discussions: [],
+                  name: q.name
+                };
+              }
             });
+
+            $scope.isListsPopulated = true;
 
             $http.get('https://api.tenderapp.com/' + profileManager.profile.tenderUri + '/categories')
               .success(function (categoriesResponse) {
@@ -321,11 +345,13 @@ app.controller("mainController", function ($scope, $http, $sce, $q, $timeout, pr
                       data.queue_id = "";
                     }
 
-                    data.list_id = (data.queue_id ? data.queue_id : "00nil");
-                    $scope.lists[data.list_id].discussions.push(data);
-
-                    if (!firstList) {
-                      firstList = $scope.lists[data.list_id];
+                    data.list_id = (data.queue_id ? data.queue_id : $scope.unassignedList.id);
+                    if(data.list_id === $scope.unassignedList.id) {
+                      $scope.unassignedList.discussions.push(data);
+                    } else if(data.list_id === $scope.myList.id) {
+                      $scope.myList.discussions.push(data);
+                    } else {
+                      $scope.lists[data.list_id].discussions.push(data);
                     }
                   });
 
@@ -333,9 +359,7 @@ app.controller("mainController", function ($scope, $http, $sce, $q, $timeout, pr
                   $scope.smashStats.smashedPercentage = 0;
                   $scope.smashStats.total = discussions.length;
 
-                  if (firstList) {
-                    $scope.selectList(firstList);
-                  }
+                  $scope.selectList($scope.unassignedList);
                 });
               });
           });

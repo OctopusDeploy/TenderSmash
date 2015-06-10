@@ -58,7 +58,14 @@
     </div>
     <div class="navbar-collapse collapse navbar-responsive-collapse">
       <ul class="nav navbar-nav">
-        <li ng-repeat="list in lists" ng-class="{active: currentList == list}"><a href="" ng-click="selectList(list)">{{ list.name }} <span class="badge">{{ list.discussions.length }}</span></a></li>
+        <li ng-class="{active: currentList == unassignedList}"><a href="" ng-click="selectList(unassignedList)">{{ unassignedList.name }} <span class="badge">{{ unassignedList.discussions.length }}</span></a></li>
+        <li ng-class="{active: currentList == myList }"><a href="" ng-click="selectList(myList)">{{ myList.name }} <span class="badge">{{ myList.discussions.length }}</span></a></li>
+        <li class="dropdown" ng-show="isListsPopulated">
+          <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-expanded="false">Team <span class="caret"></span></a>
+          <ul class="dropdown-menu" role="menu">
+            <li ng-repeat="list in lists" ng-class="{active: currentList == list}"><a href="" ng-click="selectList(list)">{{ list.name }} <span class="badge">{{ list.discussions.length }}</span></a></li>
+          </ul>
+        </li>
       </ul>
       <ul class="nav navbar-nav navbar-right">
         <li ng-show="profileManager.hasProfile"><a href="" ng-click="toggleEditProfile()">{{ profile.name }}</a></li>
