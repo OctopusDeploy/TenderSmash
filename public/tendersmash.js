@@ -346,9 +346,9 @@ app.controller("mainController", function ($scope, $http, $sce, $q, $timeout, pr
                     }
 
                     data.list_id = (data.queue_id ? data.queue_id : $scope.unassignedList.id);
-                    if(data.list_id === $scope.unassignedList.id) {
+                    if(data.list_id == $scope.unassignedList.id) {
                       $scope.unassignedList.discussions.push(data);
-                    } else if(data.list_id === $scope.myList.id) {
+                    } else if(data.list_id == $scope.myList.id) {
                       $scope.myList.discussions.push(data);
                     } else {
                       $scope.lists[data.list_id].discussions.push(data);
