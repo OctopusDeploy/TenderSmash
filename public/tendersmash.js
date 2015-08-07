@@ -211,12 +211,30 @@ app.controller("mainController", function ($scope, $http, $sce, $q, $timeout, pr
   };
 
   $scope.hide = function(discussion) {
-    _.each($scope.lists, function (list) {
-      var ix = list.discussions.indexOf(discussion);
-      if (ix >= 0) {
-        list.discussions.splice(ix, 1);
+    var discussionFound = false;
+
+    var ix = $scope.myList.discussions.indexOf(discussion);
+    if(ix >= 0) {
+      $scope.myList.discussions.splice(ix, 1);
+      discussionFound = true;
+    } else {
+      ix = $scope.unassignedList.discussion.indexOf(discussion);
+      if(ix >= 0) {
+        $scope.unassignedList.discussions.splice(ix, 1);
+        discussionFound = true;
       }
-    });
+    }
+
+    if(!discussionFound) {
+      _.each($scope.lists, function (list) {
+        var ix = list.discussions.indexOf(discussion);
+        if (ix >= 0) {
+          list.discussions.splice(ix, 1);
+          // no need to continue on looking for the discussion...
+          return false; // because `return true` means go to the next iteration...
+        }
+      });
+    }
 
     $scope.smashStats.smash();
 
