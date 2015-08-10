@@ -272,7 +272,15 @@ app.controller("mainController", function ($scope, $http, $sce, $q, $timeout, pr
   };
 
   $scope.assign = function(discussion) {
-    if (discussion.queue_id != "") {
+    if (discussion.queue_id != "" && $scope.currentList.id === "00nil")
+    {
+      $http.post(discussion.href + "/queue?queue=" + discussion.queue_id, "")
+        .success(function(x) {
+          $scope.smashStats.smash();
+          $scope.hide(discussion);
+        });
+    }
+    else if (discussion.queue_id != "") {
       $http.post(discussion.href + "/unqueue?queue=" + $scope.currentList.id, "")
         .success(function(unqueue) {
           $http.post(discussion.href + "/queue?queue=" + discussion.queue_id, "")
