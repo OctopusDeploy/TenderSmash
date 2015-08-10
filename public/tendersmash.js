@@ -175,7 +175,7 @@ app.controller("mainController", function ($scope, $http, $sce, $q, $timeout, pr
 
   $scope.applyTemplate = function(discussion, template) {
     var author = "";
-    var customerComments = _.filter(discussion.comments, function (c) { return !c.user_is_supporter; });
+    var customerComments = _.filter(discussion.comments, function (c) { return !c.user_is_supporter && !c.system_message; });
     if (customerComments.length > 0) {
       author = customerComments[customerComments.length - 1].author_name;
     }
@@ -218,7 +218,7 @@ app.controller("mainController", function ($scope, $http, $sce, $q, $timeout, pr
       $scope.myList.discussions.splice(ix, 1);
       discussionFound = true;
     } else {
-      ix = $scope.unassignedList.discussion.indexOf(discussion);
+      ix = $scope.unassignedList.discussions.indexOf(discussion);
       if(ix >= 0) {
         $scope.unassignedList.discussions.splice(ix, 1);
         discussionFound = true;
@@ -276,12 +276,14 @@ app.controller("mainController", function ($scope, $http, $sce, $q, $timeout, pr
       $http.post(discussion.href + "/queue?queue=" + discussion.queue_id, "")
         .success(function(x) {
           $scope.smashStats.smash();
+          $scope.hide(discussion);
         });
     }
     else {
-      $http.post(discussion.href + "/unqueue?queue=" + discussion.queue_id, "")
+      $http.post(discussion.href + "/unqueue?queue=" + $scope.currentList.id, "")
         .success(function(x) {
           $scope.smashStats.smash();
+          $scope.hide(discussion);
         });
     }
   };
