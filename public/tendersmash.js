@@ -273,11 +273,14 @@ app.controller("mainController", function ($scope, $http, $sce, $q, $timeout, pr
 
   $scope.assign = function(discussion) {
     if (discussion.queue_id != "") {
-      $http.post(discussion.href + "/queue?queue=" + discussion.queue_id, "")
-        .success(function(x) {
-          $scope.smashStats.smash();
-          $scope.hide(discussion);
-        });
+      $http.post(discussion.href + "/unqueue?queue=" + $scope.currentList.id, "")
+        .success(function(unqueue) {
+          $http.post(discussion.href + "/queue?queue=" + discussion.queue_id, "")
+            .success(function(x) {
+              $scope.smashStats.smash();
+              $scope.hide(discussion);
+            });
+        })
     }
     else {
       $http.post(discussion.href + "/unqueue?queue=" + $scope.currentList.id, "")
@@ -335,6 +338,7 @@ app.controller("mainController", function ($scope, $http, $sce, $q, $timeout, pr
                 };
               } else {
                 $scope.lists[q.id] = {
+                  id: q.id,
                   discussions: [],
                   name: q.name
                 };
