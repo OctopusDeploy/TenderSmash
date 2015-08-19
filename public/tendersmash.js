@@ -210,6 +210,45 @@ app.controller("mainController", function ($scope, $http, $sce, $q, $timeout, pr
     }
   };
 
+  $scope.move = function(discussion) {
+    var ix = $scope.currentList.discussions.indexOf(discussion);
+    if(ix >= 0) {
+      $scope.currentList.discussions.splice(ix, 1);
+    }
+
+    var reply = discussion.reply;
+    $http.get(discussion.href)
+      .success(function(data) {
+        data.reply = reply;
+
+        _.each(data.comments, function (c) { c.html = $sce.trustAsHtml(c.formatted_body); });
+
+        if (data.cached_queue_list.length > 0) {
+          data.queue_id = data.cached_queue_list[data.cached_queue_list.length - 1];
+        } else {
+          data.queue_id = "";
+        }
+
+        data.list_id = (data.queue_id ? data.queue_id : $scope.unassignedList.id);
+        if(data.list_id == $scope.unassignedList.id) {
+          $scope.unassignedList.discussions.push(data);
+          $scope.unassignedList.discussions.sort($scope.sort);
+        } else if(data.list_id == $scope.myList.id) {
+          $scope.myList.discussions.push(data);
+          $scope.myList.discussions.sort($scope.sort);
+        } else {
+          $scope.lists[data.list_id].discussions.push(data);
+          $scope.lists[data.list_id].discussions.sort($scope.sort);
+        }
+
+        $scope.currentDiscussion = data;
+      });
+  };
+
+  $scope.sort = function(first, second) {
+    return first.last_updated_at < second.last_updated_at;
+  }
+
   $scope.hide = function(discussion) {
     var discussionFound = false;
 
@@ -277,7 +316,7 @@ app.controller("mainController", function ($scope, $http, $sce, $q, $timeout, pr
       $http.post(discussion.href + "/queue?queue=" + discussion.queue_id, "")
         .success(function(x) {
           $scope.smashStats.smash();
-          $scope.hide(discussion);
+          $scope.move(discussion);
         });
     }
     else if (discussion.queue_id != "") {
@@ -286,7 +325,7 @@ app.controller("mainController", function ($scope, $http, $sce, $q, $timeout, pr
           $http.post(discussion.href + "/queue?queue=" + discussion.queue_id, "")
             .success(function(x) {
               $scope.smashStats.smash();
-              $scope.hide(discussion);
+              $scope.move(discussion);
             });
         })
     }
@@ -294,7 +333,7 @@ app.controller("mainController", function ($scope, $http, $sce, $q, $timeout, pr
       $http.post(discussion.href + "/unqueue?queue=" + $scope.currentList.id, "")
         .success(function(x) {
           $scope.smashStats.smash();
-          $scope.hide(discussion);
+          $scope.move(discussion);
         });
     }
   };
