@@ -211,7 +211,7 @@
               <div class="panel-heading">{{comment.author_name}} <small class="text-info" ng-show="!comment.user_is_supporter">{{ comment.author_email }}</small> <small class="text-info" ng-show="comment.internal">(internal)</small> <small>{{ comment.created_at | moment }}</small> <small style="float: right" ng-click="comment.showPlain = !comment.showPlain">Toggle plain text</small></div>
               <div class="panel-body">
                 <div ng-show="comment.assets">
-                  Attachments: <span style="margin-left: 10px" ng-repeat="ass in comment.assets"><a href="{{comment.html_href}}{{ass.download_path}}" target="_blank">{{ ass.filename }}</a></span>
+                  Attachments: <span style="margin-left: 10px" ng-repeat="ass in comment.assets"><a href="{{ass.download_path}}" target="_blank">{{ ass.filename }}</a></span>
                   <hr />
                 </div>
 
