@@ -362,10 +362,9 @@ app.controller("mainController", function ($scope, $http, $sce, $q, $timeout, pr
       .success(function (queues) {
         $http.get('https://api.tenderapp.com/' + profileManager.profile.tenderUri + '/discussions/pending')
           .success(function(pendingDiscussionListing) {
+            console.log(pendingDiscussionListing);
             $scope.editProfile = false;
             $scope.queues = queues;
-            console.log(queues);
-            console.log(queues.named_queues);
 
             $scope.unassignedList = {
               id: '00nil',
@@ -374,7 +373,6 @@ app.controller("mainController", function ($scope, $http, $sce, $q, $timeout, pr
             };
 
             _.each(queues.named_queues, function (q) {
-              console.log(q);
               q.id = q.href.substring(q.href.lastIndexOf('/') + 1);
 
               if(q.user_id == profileManager.profile.id) {
@@ -394,45 +392,69 @@ app.controller("mainController", function ($scope, $http, $sce, $q, $timeout, pr
 
             $scope.isListsPopulated = true;
 
-            $http.get('https://api.tenderapp.com/' + profileManager.profile.tenderUri + '/categories')
-              .success(function (categoriesResponse) {
+            var unassignedPromises = [];
+            var promises = [];
+            var pendingUnassigned = _.filter(pendingDiscussionListing.discussions, function (d) { return d.cached_queue_list.length === 0; });
+            var pendingAssigned = _.filter(pendingDiscussionListing.discussions, function (d) { return d.cached_queue_list.length > 0; });
+            
+            _.each(pendingUnassigned, function (d) {
+              unassignedPromises.push($http.get(d.href).success(function (data) { return data; }));
+            });
+            
+            _.each(pendingAssigned, function (discus) {
+              promises.push($http.get(discus.href).success(function (data) { return data; }));
+            });
 
-                var promises = [];
-                _.each(pendingDiscussionListing.discussions, function (discus) {
-                  promises.push($http.get(discus.href).success(function (data) { return data; }));
-                });
+            console.debug('[' + (new Date()).toLocaleString() + '] Retrieving unassigned discussions...');
+            $q.all(unassignedPromises).then(function (unassignedDiscussions) {
+              console.debug('[' + (new Date()).toLocaleString() + '] Retrieved all unassigned discussions...');
+              _.each(unassignedDiscussions, function (response) {
+                var data = response.data;
+                $scope.applyTemplate(data);
 
-                $q.all(promises).then(function (discussions) {
-                  var firstList = null;
-                  _.each(discussions, function (response) {
-                    var data = response.data;
-                    $scope.applyTemplate(data);
-
-                    _.each(data.comments, function (c) { c.html = $sce.trustAsHtml(c.formatted_body); });
-
-                    if (data.cached_queue_list.length > 0) {
-                      data.queue_id = data.cached_queue_list[data.cached_queue_list.length - 1];
-                    } else {
-                      data.queue_id = "";
-                    }
-
-                    data.list_id = (data.queue_id ? data.queue_id : $scope.unassignedList.id);
-                    if(data.list_id == $scope.unassignedList.id) {
-                      $scope.unassignedList.discussions.push(data);
-                    } else if(data.list_id == $scope.myList.id) {
-                      $scope.myList.discussions.push(data);
-                    } else {
-                      $scope.lists[data.list_id].discussions.push(data);
-                    }
-                  });
-
-                  $scope.smashStats.smashed = 0;
-                  $scope.smashStats.smashedPercentage = 0;
-                  $scope.smashStats.total = discussions.length;
-
-                  $scope.selectList($scope.unassignedList);
-                });
+                _.each(data.comments, function (c) { c.html = $sce.trustAsHtml(c.formatted_body); });
+                data.queue_id = "";
+                $scope.unassignedList.discussions.push(data);
               });
+              
+              $scope.smashStats.smashed = 0;
+              $scope.smashStats.smashedPercentage = 0;
+              $scope.smashStats.total = unassignedDiscussions.length;
+
+              $scope.selectList($scope.unassignedList);
+              
+              console.debug('[' + (new Date()).toLocaleString() + '] Retrieving assigned discussions...');
+              $q.all(promises).then(function (discussions) {
+                console.debug('[' + (new Date()).toLocaleString() + '] Retrieved all assigned discussions...');
+                var firstList = null;
+                _.each(discussions, function (response) {
+                  var data = response.data;
+                  $scope.applyTemplate(data);
+
+                  _.each(data.comments, function (c) { c.html = $sce.trustAsHtml(c.formatted_body); });
+
+                  if (data.cached_queue_list.length > 0) {
+                    data.queue_id = data.cached_queue_list[data.cached_queue_list.length - 1];
+                  } else {
+                    data.queue_id = "";
+                  }
+
+                  data.list_id = (data.queue_id ? data.queue_id : $scope.unassignedList.id);
+                  if(data.list_id == $scope.unassignedList.id) {
+                    $scope.unassignedList.discussions.push(data);
+                  } else if(data.list_id == $scope.myList.id) {
+                    $scope.myList.discussions.push(data);
+                  } else {
+                    $scope.lists[data.list_id].discussions.push(data);
+                  }
+                });
+                
+                $scope.smashStats.total += $scope.myList.discussions.length;
+
+              });
+
+            });
+
           });
       });
   };
