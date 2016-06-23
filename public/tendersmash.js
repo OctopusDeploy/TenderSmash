@@ -359,6 +359,9 @@ app.controller("mainController", function ($scope, $http, $sce, $q, $timeout, pr
     _.each(disccussions, function (disccussion) {
       promises.push($http.get(disccussion.href)
           .then(function(response) {
+            // There is no way for us to know whether we have all comments and retrieving them separately for all discussion doubles the load time
+            // so we have this workaround in place.
+            if (!response.data.comments || response.data.comments.length <= 20) return response;
             var baseUrl = response.data.comments_href.replace("{?page}", "");
             return $scope.getComments(baseUrl)
                 .then(function(comments) {
