@@ -338,6 +338,22 @@ app.controller("mainController", function ($scope, $http, $sce, $q, $timeout, pr
     }
   };
 
+  $scope.getComments = function(baseUrl, currentPage) {
+    if (!currentPage) currentPage = 1;
+    return $http.get(baseUrl + "?page=" + currentPage)
+                .then(function(currentPageResponse) {
+                  if (currentPageResponse.data.comments) {
+                    return $scope.getComments(baseUrl, currentPage + 1)
+                                .then(function(nextPageComments) {
+                                  var comments = currentPageResponse.data.comments.concat(nextPageComments);
+                                  return $q.when(comments);
+                                });
+                  } else {
+                    return $q.when([]);
+                  }
+                });
+  }
+
   $scope.reload = function() {
     $scope.currentDiscussion = null;
     $scope.currentList = null;
@@ -398,11 +414,29 @@ app.controller("mainController", function ($scope, $http, $sce, $q, $timeout, pr
             var pendingAssigned = _.filter(pendingDiscussionListing.discussions, function (d) { return d.cached_queue_list.length > 0; });
             
             _.each(pendingUnassigned, function (d) {
-              unassignedPromises.push($http.get(d.href).success(function (data) { return data; }));
+              unassignedPromises.push($http.get(d.href)
+                                            .then(function(response) {
+                                              var baseUrl = response.data.comments_href.replace("{?page}", "");
+                                              return $scope.getComments(baseUrl)
+                                                            .then(function(comments) {
+                                                              response.data.comments = comments;
+                                                              return $q.when(response);
+                                                            });
+                                            }));
+
             });
             
             _.each(pendingAssigned, function (discus) {
-              promises.push($http.get(discus.href).success(function (data) { return data; }));
+              promises.push($http.get(discus.href)
+                                  .then(function(response) {
+                                      var baseUrl = response.data.comments_href.replace("{?page}", "");
+                                      return $scope.getComments(baseUrl)
+                                                    .then(function(comments) {
+                                                      response.data.comments = comments;
+                                                      return $q.when(response);
+                                                    });
+                                  }));
+                                  //.success(function (data) { return data; }));
             });
 
             console.debug('[' + (new Date()).toLocaleString() + '] Retrieving unassigned discussions...');
