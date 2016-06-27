@@ -338,6 +338,42 @@ app.controller("mainController", function ($scope, $http, $sce, $q, $timeout, pr
     }
   };
 
+  $scope.getComments = function(baseUrl, currentPage) {
+    if (!currentPage) currentPage = 1;
+    return $http.get(baseUrl + "?page=" + currentPage)
+                .then(function(currentPageResponse) {
+                  if (currentPageResponse.data.comments) {
+                    return $scope.getComments(baseUrl, currentPage + 1)
+                                .then(function(nextPageComments) {
+                                  var comments = currentPageResponse.data.comments.concat(nextPageComments);
+                                  return comments;
+                                });
+                  } else {
+                    return [];
+                  }
+                });
+  }
+
+  $scope.getDiscussions = function(disccussions) {
+    var promises = [];
+    _.each(disccussions, function (disccussion) {
+      promises.push($http.get(disccussion.href)
+          .then(function(response) {
+            // There is no way for us to know whether we have all comments and retrieving them separately for all discussion doubles the load time
+            // so we have this workaround in place.
+            if (!response.data.comments || response.data.comments.length <= 20) return response;
+            var baseUrl = response.data.comments_href.replace("{?page}", "");
+            return $scope.getComments(baseUrl)
+                .then(function(comments) {
+                  response.data.comments = comments;
+                  return response;
+                });
+          }));
+    });
+
+    return promises;
+  }
+
   $scope.reload = function() {
     $scope.currentDiscussion = null;
     $scope.currentList = null;
@@ -392,18 +428,10 @@ app.controller("mainController", function ($scope, $http, $sce, $q, $timeout, pr
 
             $scope.isListsPopulated = true;
 
-            var unassignedPromises = [];
-            var promises = [];
             var pendingUnassigned = _.filter(pendingDiscussionListing.discussions, function (d) { return d.cached_queue_list.length === 0; });
             var pendingAssigned = _.filter(pendingDiscussionListing.discussions, function (d) { return d.cached_queue_list.length > 0; });
-            
-            _.each(pendingUnassigned, function (d) {
-              unassignedPromises.push($http.get(d.href).success(function (data) { return data; }));
-            });
-            
-            _.each(pendingAssigned, function (discus) {
-              promises.push($http.get(discus.href).success(function (data) { return data; }));
-            });
+            var unassignedPromises = $scope.getDiscussions(pendingUnassigned);
+            var assignedPromises = $scope.getDiscussions(pendingAssigned);
 
             console.debug('[' + (new Date()).toLocaleString() + '] Retrieving unassigned discussions...');
             $q.all(unassignedPromises).then(function (unassignedDiscussions) {
@@ -424,7 +452,7 @@ app.controller("mainController", function ($scope, $http, $sce, $q, $timeout, pr
               $scope.selectList($scope.unassignedList);
               
               console.debug('[' + (new Date()).toLocaleString() + '] Retrieving assigned discussions...');
-              $q.all(promises).then(function (discussions) {
+              $q.all(assignedPromises).then(function (discussions) {
                 console.debug('[' + (new Date()).toLocaleString() + '] Retrieved all assigned discussions...');
                 var firstList = null;
                 _.each(discussions, function (response) {
