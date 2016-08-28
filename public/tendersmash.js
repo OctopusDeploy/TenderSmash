@@ -384,10 +384,10 @@ app.controller("mainController", function ($scope, $http, $sce, $q, $timeout, pr
       });
   }
 
-  $scope.getDiscussions = function (disccussions) {
+  $scope.getDiscussions = function (discussions) {
     var promises = [];
-    _.each(disccussions, function (disccussion) {
-      promises.push($http.get(disccussion.href)
+    _.each(discussions, function (discussion) {
+      promises.push($http.get(discussion.href)
         .then(function (response) {
           // There is no way for us to know whether we have all comments and retrieving them separately for all discussion doubles the load time
           // so we have this workaround in place.
