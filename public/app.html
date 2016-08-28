@@ -31,21 +31,6 @@
       color: #fff;
     }
   </style>
-  <script type="text/javascript">
-    var confirmOnPageExit = function (e)
-    {
-      e = e || window.event;
-
-      var message = "Nooo, don't leave me";
-      if (e)
-      {
-        e.returnValue = message;
-      }
-      return message;
-    };
-
-    window.onbeforeunload = confirmOnPageExit;
-  </script>
 </head>
 
 <body ng-controller="mainController">
@@ -101,7 +86,7 @@
     <div class="row" ng-show="editProfile">
       <div class="col-md-12">
         <div class="well bs-component">
-          <form class="form-horizontal">
+          <form class="form-horizontal" confirm-on-exit>
             <fieldset>
               <legend ng-hide="profileManager.hasProfile">Welcome to TenderSmash!</legend>
               <p ng-hide="profileManager.hasProfile">We just need some basic information to connect to Tender.</p>

@@ -3,6 +3,18 @@ var app = angular.module('tenderSmash', ['chieffancypants.loadingBar', 'LocalSto
     cfpLoadingBarProvider.includeSpinner = false;
   }]);
 
+app.directive('confirmOnExit', function() {
+  return {
+    link: function($scope, elem, attrs) {
+      window.onbeforeunload = function() {
+        var anyChanged = !$scope.currentList.discussions.every(function(discussion) { return discussion.reply === discussion.originalReply; });
+        if (anyChanged)
+          return "You have made changes to one of the replies. Are you sure you want to reload?";
+      }
+    }
+  };
+});
+
 
 $.fn.selectRange = function(start, end) {
   var e = document.getElementById($(this).attr('id'));
@@ -207,6 +219,7 @@ app.controller("mainController", function ($scope, $http, $sce, $q, $timeout, pr
     }
     if (template) {
       discussion.reply = template.replace("[AUTHOR]", author).replace("[ME]", profileManager.profile.name);
+      discussion.originalReply = discussion.reply;
     }
   };
 
