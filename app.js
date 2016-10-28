@@ -16,6 +16,7 @@ log.info("Public directory is", pub);
 var app = express();
 app.use(bodyParser());
 app.use(cookieParser());
+app.use('/.well-known', express.static('.well-known'));
 app.use(express.static(__dirname + '/' + pub));
 
 var proxyTenderRequest = function(method, expressRequest) {
