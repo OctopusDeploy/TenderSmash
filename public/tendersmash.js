@@ -17,7 +17,6 @@ app.directive('confirmOnExit', function () {
   };
 });
 
-
 $.fn.selectRange = function (start, end) {
   var e = document.getElementById($(this).attr('id'));
   if (!e) return;
@@ -191,6 +190,10 @@ app.controller("mainController", function ($scope, $http, $sce, $q, $timeout, pr
   $scope.selectDiscussion = function (d) {
     $("html, body").animate({scrollTop: 0}, "slow");
     $scope.currentDiscussion = d;
+    //ensure all links open a new window
+    $(document).ready(function(){
+      $('.comment a').attr('target', '_blank');
+    });
     $scope.focusOnReply();
   };
 
