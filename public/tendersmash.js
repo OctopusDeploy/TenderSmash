@@ -1,43 +1,68 @@
 var app = angular.module('tenderSmash', ['chieffancypants.loadingBar', 'LocalStorageModule'])
-  .config(['cfpLoadingBarProvider', function(cfpLoadingBarProvider) {
+  .config(['cfpLoadingBarProvider', function (cfpLoadingBarProvider) {
     cfpLoadingBarProvider.includeSpinner = false;
   }]);
 
+app.directive('confirmOnExit', function () {
+  return {
+    link: function ($scope, elem, attrs) {
+      window.onbeforeunload = function () {
+        var anyChanged = !$scope.currentList.discussions.every(function (discussion) {
+          return discussion.reply === discussion.originalReply;
+        });
+        if (anyChanged)
+          return "You have made changes to one of the replies. Are you sure you want to reload?";
+      }
+    }
+  };
+});
 
-$.fn.selectRange = function(start, end) {
+$.fn.selectRange = function (start, end) {
   var e = document.getElementById($(this).attr('id'));
   if (!e) return;
-  else if (e.setSelectionRange) { e.focus(); e.setSelectionRange(start, end); } /* WebKit */
-  else if (e.createTextRange) { var range = e.createTextRange(); range.collapse(true); range.moveEnd('character', end); range.moveStart('character', start); range.select(); } /* IE */
-  else if (e.selectionStart) { e.selectionStart = start; e.selectionEnd = end; }
+  else if (e.setSelectionRange) {
+    e.focus();
+    e.setSelectionRange(start, end);
+  } /* WebKit */
+  else if (e.createTextRange) {
+    var range = e.createTextRange();
+    range.collapse(true);
+    range.moveEnd('character', end);
+    range.moveStart('character', start);
+    range.select();
+  } /* IE */
+  else if (e.selectionStart) {
+    e.selectionStart = start;
+    e.selectionEnd = end;
+  }
 };
 
-app.filter('moment', function() {
-  return function(item) {
+app.filter('moment', function () {
+  return function (item) {
     return moment(item).fromNow();
   };
 });
 
-app.filter('reverse', function() {
-  return function(items) {
+app.filter('reverse', function () {
+  return function (items) {
     return (items || []).slice().reverse();
   };
 });
 
-app.factory("profileManager", function (localStorageService, $rootScope){
+app.factory("profileManager", function (localStorageService, $rootScope) {
   var profileManager = {
     profile: {},
     hasProfile: false
   };
 
-  profileManager.load = function() {
+  profileManager.load = function () {
     profileManager.profile.name = localStorageService.get("name");
     profileManager.profile.tenderUri = localStorageService.get("uri");
     profileManager.profile.tenderKey = localStorageService.get("key");
     profileManager.hasProfile = profileManager.profile.name && profileManager.profile.tenderUri && profileManager.profile.tenderKey;
   };
 
-  profileManager.save = function() {
+  profileManager.save = function () {
     localStorageService.clearAll();
     localStorageService.set("name", profileManager.profile.name);
     localStorageService.set("uri", profileManager.profile.tenderUri);
@@ -57,7 +82,7 @@ app.factory("errorManager", function () {
       self.error = e;
       console.log("error: ", e);
     };
-    self.clear = function() {
+    self.clear = function () {
       self.error = null;
     }
   }
@@ -65,9 +90,9 @@ app.factory("errorManager", function () {
   return new ErrorManager();
 });
 
-app.factory('tenderRequestInterceptor', function($q, errorManager, profileManager) {
+app.factory('tenderRequestInterceptor', function ($q, errorManager, profileManager) {
   return {
-    'request': function(config) {
+    'request': function (config) {
       config.url = config.url.replace("http://api.tenderapp.com", "/proxy")
         .replace("https://api.tenderapp.com:443", "/proxy")
         .replace("https://api.tenderapp.com", "/proxy");
@@ -75,25 +100,25 @@ app.factory('tenderRequestInterceptor', function($q, errorManager, profileManage
       return config;
     },
 
-    'responseError': function(rejection) {
+    'responseError': function (rejection) {
       errorManager.setError(rejection.status + " - " + rejection.statusText);
       return $q.reject(rejection);
     },
 
-    'response': function(r) {
+    'response': function (r) {
       errorManager.clear();
       return r;
     }
   };
 });
 
-app.config(function($httpProvider) {
+app.config(function ($httpProvider) {
   $httpProvider.interceptors.push('tenderRequestInterceptor');
 });
 
 app.controller("mainController", function ($scope, $http, $sce, $q, $timeout, profileManager, errorManager) {
-	$scope.currentList = null;
-	$scope.editProfile = false;
+  $scope.currentList = null;
+  $scope.editProfile = false;
   $scope.errorManager = errorManager;
   $scope.lists = {};
   $scope.showSummary = false;
@@ -101,21 +126,21 @@ app.controller("mainController", function ($scope, $http, $sce, $q, $timeout, pr
     total: 0,
     smashed: 0,
     smashedPercentage: 0,
-    smash: function() {
+    smash: function () {
       $scope.smashStats.smashed = $scope.smashStats.smashed + 1;
       $scope.smashStats.smashedPercentage = ($scope.smashStats.smashed / $scope.smashStats.total) * 100.00;
     }
   };
 
-  $scope.toggleEditProfile = function() {
+  $scope.toggleEditProfile = function () {
     $scope.editProfile = !$scope.editProfile;
   };
 
-  $scope.toggleSummary = function() {
+  $scope.toggleSummary = function () {
     $scope.showSummary = !$scope.showSummary;
   };
 
-  $scope.getSummary = function() {
+  $scope.getSummary = function () {
     var lines = [];
     _.each($scope.lists, function (l) {
       lines.push(l.name + ": " + l.discussions.length + " assigned");
@@ -127,7 +152,7 @@ app.controller("mainController", function ($scope, $http, $sce, $q, $timeout, pr
     return lines.join("\r\n");
   };
 
-  $scope.saveAndReloadProfile = function() {
+  $scope.saveAndReloadProfile = function () {
     profileManager.save();
     $scope.reload();
   };
@@ -139,16 +164,16 @@ app.controller("mainController", function ($scope, $http, $sce, $q, $timeout, pr
     "TFGIT": "Hi [AUTHOR],\n\nThanks for getting in touch! REPLY\n\nHope that helps!\n\n[ME]"
   };
 
-	$scope.selectList = function (d) {
-		$scope.currentList = d;
-		if ($scope.currentList.discussions.length) {
-			$scope.currentDiscussion = $scope.currentList.discussions[0];
-		} else {
-			$scope.currentDiscussion = null;
-		}
-	};
+  $scope.selectList = function (d) {
+    $scope.currentList = d;
+    if ($scope.currentList.discussions.length) {
+      $scope.currentDiscussion = $scope.currentList.discussions[0];
+    } else {
+      $scope.currentDiscussion = null;
+    }
+  };
 
-  $scope.focusOnReply = function() {
+  $scope.focusOnReply = function () {
     $timeout(function () {
       $("#reply_box").focus();
       var indexOfReply = $("#reply_box").val().indexOf("REPLY");
@@ -162,20 +187,26 @@ app.controller("mainController", function ($scope, $http, $sce, $q, $timeout, pr
     }, 100);
   };
 
-	$scope.selectDiscussion = function (d) {
-    $("html, body").animate({ scrollTop: 0 }, "slow");
-		$scope.currentDiscussion = d;
+  $scope.selectDiscussion = function (d) {
+    $("html, body").animate({scrollTop: 0}, "slow");
+    $scope.currentDiscussion = d;
+    //ensure all links open a new window
+    $(document).ready(function(){
+      $('.comment a').attr('target', '_blank');
+    });
     $scope.focusOnReply();
   };
 
-  $scope.changeTemplate = function(discussion, template) {
+  $scope.changeTemplate = function (discussion, template) {
     $scope.applyTemplate(discussion, template);
     $scope.focusOnReply();
   };
 
-  $scope.applyTemplate = function(discussion, template) {
+  $scope.applyTemplate = function (discussion, template) {
     var author = "";
-    var customerComments = _.filter(discussion.comments, function (c) { return !c.user_is_supporter && !c.system_message; });
+    var customerComments = _.filter(discussion.comments, function (c) {
+      return !c.user_is_supporter && !c.system_message;
+    });
     if (customerComments.length > 0) {
       author = customerComments[customerComments.length - 1].author_name;
     }
@@ -207,21 +238,24 @@ app.controller("mainController", function ($scope, $http, $sce, $q, $timeout, pr
     }
     if (template) {
       discussion.reply = template.replace("[AUTHOR]", author).replace("[ME]", profileManager.profile.name);
+      discussion.originalReply = discussion.reply;
     }
   };
 
-  $scope.move = function(discussion) {
+  $scope.move = function (discussion) {
     var ix = $scope.currentList.discussions.indexOf(discussion);
-    if(ix >= 0) {
+    if (ix >= 0) {
       $scope.currentList.discussions.splice(ix, 1);
     }
 
     var reply = discussion.reply;
     $http.get(discussion.href)
-      .success(function(data) {
+      .success(function (data) {
         data.reply = reply;
 
-        _.each(data.comments, function (c) { c.html = $sce.trustAsHtml(c.formatted_body); });
+        _.each(data.comments, function (c) {
+          c.html = $sce.trustAsHtml(c.formatted_body);
+        });
 
         if (data.cached_queue_list.length > 0) {
           data.queue_id = data.cached_queue_list[data.cached_queue_list.length - 1];
@@ -230,10 +264,10 @@ app.controller("mainController", function ($scope, $http, $sce, $q, $timeout, pr
         }
 
         data.list_id = (data.queue_id ? data.queue_id : $scope.unassignedList.id);
-        if(data.list_id == $scope.unassignedList.id) {
+        if (data.list_id == $scope.unassignedList.id) {
           $scope.unassignedList.discussions.push(data);
           $scope.unassignedList.discussions.sort($scope.sort);
-        } else if(data.list_id == $scope.myList.id) {
+        } else if (data.list_id == $scope.myList.id) {
           $scope.myList.discussions.push(data);
           $scope.myList.discussions.sort($scope.sort);
         } else {
@@ -245,26 +279,26 @@ app.controller("mainController", function ($scope, $http, $sce, $q, $timeout, pr
       });
   };
 
-  $scope.sort = function(first, second) {
+  $scope.sort = function (first, second) {
     return first.last_updated_at < second.last_updated_at;
   }
 
-  $scope.hide = function(discussion) {
+  $scope.hide = function (discussion) {
     var discussionFound = false;
 
     var ix = $scope.myList.discussions.indexOf(discussion);
-    if(ix >= 0) {
+    if (ix >= 0) {
       $scope.myList.discussions.splice(ix, 1);
       discussionFound = true;
     } else {
       ix = $scope.unassignedList.discussions.indexOf(discussion);
-      if(ix >= 0) {
+      if (ix >= 0) {
         $scope.unassignedList.discussions.splice(ix, 1);
         discussionFound = true;
       }
     }
 
-    if(!discussionFound) {
+    if (!discussionFound) {
       _.each($scope.lists, function (list) {
         var ix = list.discussions.indexOf(discussion);
         if (ix >= 0) {
@@ -282,48 +316,47 @@ app.controller("mainController", function ($scope, $http, $sce, $q, $timeout, pr
     }
   };
 
-  $scope.ack = function(discussion) {
+  $scope.ack = function (discussion) {
     $http.get(discussion.href)
-      .success(function(data) {
+      .success(function (data) {
         if (data.comments_count !== discussion.comments_count) {
           errorManager.setError("Someone else has commented on this item.");
         } else {
           $http.post(discussion.acknowledge_href)
-            .success(function(x) {
+            .success(function (x) {
               $scope.hide(discussion);
             });
         }
       });
   };
 
-  $scope.reply = function(discussion) {
+  $scope.reply = function (discussion) {
     $http.get(discussion.href)
-      .success(function(data) {
+      .success(function (data) {
         if (data.comments_count !== discussion.comments_count) {
           errorManager.setError("Someone else has commented on this item.");
         } else {
-          $http.post(discussion.href + "/comments", { body: discussion.reply, skip_spam: true })
-            .success(function(x) {
+          $http.post(discussion.href + "/comments", {body: discussion.reply, skip_spam: true})
+            .success(function (x) {
               $scope.hide(discussion);
             });
         }
       });
   };
 
-  $scope.assign = function(discussion) {
-    if (discussion.queue_id != "" && $scope.currentList.id === "00nil")
-    {
+  $scope.assign = function (discussion) {
+    if (discussion.queue_id != "" && $scope.currentList.id === "00nil") {
       $http.post(discussion.href + "/queue?queue=" + discussion.queue_id, "")
-        .success(function(x) {
+        .success(function (x) {
           $scope.smashStats.smash();
           $scope.move(discussion);
         });
     }
     else if (discussion.queue_id != "") {
       $http.post(discussion.href + "/unqueue?queue=" + $scope.currentList.id, "")
-        .success(function(unqueue) {
+        .success(function (unqueue) {
           $http.post(discussion.href + "/queue?queue=" + discussion.queue_id, "")
-            .success(function(x) {
+            .success(function (x) {
               $scope.smashStats.smash();
               $scope.move(discussion);
             });
@@ -331,50 +364,50 @@ app.controller("mainController", function ($scope, $http, $sce, $q, $timeout, pr
     }
     else {
       $http.post(discussion.href + "/unqueue?queue=" + $scope.currentList.id, "")
-        .success(function(x) {
+        .success(function (x) {
           $scope.smashStats.smash();
           $scope.move(discussion);
         });
     }
   };
 
-  $scope.getComments = function(baseUrl, currentPage) {
+  $scope.getComments = function (baseUrl, currentPage) {
     if (!currentPage) currentPage = 1;
     return $http.get(baseUrl + "?page=" + currentPage)
-                .then(function(currentPageResponse) {
-                  if (currentPageResponse.data.comments) {
-                    return $scope.getComments(baseUrl, currentPage + 1)
-                                .then(function(nextPageComments) {
-                                  var comments = currentPageResponse.data.comments.concat(nextPageComments);
-                                  return comments;
-                                });
-                  } else {
-                    return [];
-                  }
-                });
+      .then(function (currentPageResponse) {
+        if (currentPageResponse.data.comments) {
+          return $scope.getComments(baseUrl, currentPage + 1)
+            .then(function (nextPageComments) {
+              var comments = currentPageResponse.data.comments.concat(nextPageComments);
+              return comments;
+            });
+        } else {
+          return [];
+        }
+      });
   }
 
-  $scope.getDiscussions = function(disccussions) {
+  $scope.getDiscussions = function (discussions) {
     var promises = [];
-    _.each(disccussions, function (disccussion) {
-      promises.push($http.get(disccussion.href)
-          .then(function(response) {
-            // There is no way for us to know whether we have all comments and retrieving them separately for all discussion doubles the load time
-            // so we have this workaround in place.
-            if (!response.data.comments || response.data.comments.length <= 20) return response;
-            var baseUrl = response.data.comments_href.replace("{?page}", "");
-            return $scope.getComments(baseUrl)
-                .then(function(comments) {
-                  response.data.comments = comments;
-                  return response;
-                });
-          }));
+    _.each(discussions, function (discussion) {
+      promises.push($http.get(discussion.href)
+        .then(function (response) {
+          // There is no way for us to know whether we have all comments and retrieving them separately for all discussion doubles the load time
+          // so we have this workaround in place.
+          if (!response.data.comments || response.data.comments.length <= 20) return response;
+          var baseUrl = response.data.comments_href.replace("{?page}", "");
+          return $scope.getComments(baseUrl)
+            .then(function (comments) {
+              response.data.comments = comments;
+              return response;
+            });
+        }));
     });
 
     return promises;
   }
 
-  $scope.reload = function() {
+  $scope.reload = function () {
     $scope.currentDiscussion = null;
     $scope.currentList = null;
     $scope.lists = {};
@@ -389,7 +422,7 @@ app.controller("mainController", function ($scope, $http, $sce, $q, $timeout, pr
       return;
     } else {
       $http.get('https://api.tenderapp.com/' + profileManager.profile.tenderUri + '/profile')
-        .success(function(profile) {
+        .success(function (profile) {
           profileManager.profile.id = profile.href.substring(profile.href.lastIndexOf('/') + 1);
         });
     }
@@ -397,7 +430,7 @@ app.controller("mainController", function ($scope, $http, $sce, $q, $timeout, pr
     $http.get('https://api.tenderapp.com/' + profileManager.profile.tenderUri + '/queues')
       .success(function (queues) {
         $http.get('https://api.tenderapp.com/' + profileManager.profile.tenderUri + '/discussions/pending')
-          .success(function(pendingDiscussionListing) {
+          .success(function (pendingDiscussionListing) {
             console.log(pendingDiscussionListing);
             $scope.editProfile = false;
             $scope.queues = queues;
@@ -411,7 +444,7 @@ app.controller("mainController", function ($scope, $http, $sce, $q, $timeout, pr
             _.each(queues.named_queues, function (q) {
               q.id = q.href.substring(q.href.lastIndexOf('/') + 1);
 
-              if(q.user_id == profileManager.profile.id) {
+              if (q.user_id == profileManager.profile.id) {
                 $scope.myList = {
                   id: q.id,
                   discussions: [],
@@ -428,8 +461,12 @@ app.controller("mainController", function ($scope, $http, $sce, $q, $timeout, pr
 
             $scope.isListsPopulated = true;
 
-            var pendingUnassigned = _.filter(pendingDiscussionListing.discussions, function (d) { return d.cached_queue_list.length === 0; });
-            var pendingAssigned = _.filter(pendingDiscussionListing.discussions, function (d) { return d.cached_queue_list.length > 0; });
+            var pendingUnassigned = _.filter(pendingDiscussionListing.discussions, function (d) {
+              return d.cached_queue_list.length === 0;
+            });
+            var pendingAssigned = _.filter(pendingDiscussionListing.discussions, function (d) {
+              return d.cached_queue_list.length > 0;
+            });
             var unassignedPromises = $scope.getDiscussions(pendingUnassigned);
             var assignedPromises = $scope.getDiscussions(pendingAssigned);
 
@@ -440,17 +477,19 @@ app.controller("mainController", function ($scope, $http, $sce, $q, $timeout, pr
                 var data = response.data;
                 $scope.applyTemplate(data);
 
-                _.each(data.comments, function (c) { c.html = $sce.trustAsHtml(c.formatted_body); });
+                _.each(data.comments, function (c) {
+                  c.html = $sce.trustAsHtml(c.formatted_body);
+                });
                 data.queue_id = "";
                 $scope.unassignedList.discussions.push(data);
               });
-              
+
               $scope.smashStats.smashed = 0;
               $scope.smashStats.smashedPercentage = 0;
               $scope.smashStats.total = unassignedDiscussions.length;
 
               $scope.selectList($scope.unassignedList);
-              
+
               console.debug('[' + (new Date()).toLocaleString() + '] Retrieving assigned discussions...');
               $q.all(assignedPromises).then(function (discussions) {
                 console.debug('[' + (new Date()).toLocaleString() + '] Retrieved all assigned discussions...');
@@ -459,7 +498,9 @@ app.controller("mainController", function ($scope, $http, $sce, $q, $timeout, pr
                   var data = response.data;
                   $scope.applyTemplate(data);
 
-                  _.each(data.comments, function (c) { c.html = $sce.trustAsHtml(c.formatted_body); });
+                  _.each(data.comments, function (c) {
+                    c.html = $sce.trustAsHtml(c.formatted_body);
+                  });
 
                   if (data.cached_queue_list.length > 0) {
                     data.queue_id = data.cached_queue_list[data.cached_queue_list.length - 1];
@@ -468,15 +509,15 @@ app.controller("mainController", function ($scope, $http, $sce, $q, $timeout, pr
                   }
 
                   data.list_id = (data.queue_id ? data.queue_id : $scope.unassignedList.id);
-                  if(data.list_id == $scope.unassignedList.id) {
+                  if (data.list_id == $scope.unassignedList.id) {
                     $scope.unassignedList.discussions.push(data);
-                  } else if(data.list_id == $scope.myList.id) {
+                  } else if (data.list_id == $scope.myList.id) {
                     $scope.myList.discussions.push(data);
                   } else {
                     $scope.lists[data.list_id].discussions.push(data);
                   }
                 });
-                
+
                 $scope.smashStats.total += $scope.myList.discussions.length;
 
               });
