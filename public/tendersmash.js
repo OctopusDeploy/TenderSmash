@@ -258,7 +258,7 @@ app.controller("mainController", function ($scope, $http, $sce, $q, $timeout, pr
         });
 
         if (data.cached_queue_list.length > 0) {
-          data.queue_id = data.cached_queue_list[data.cached_queue_list.length - 1];
+          data.queue_id = getHumanOrFirst(data.cached_queue_list);
         } else {
           data.queue_id = "";
         }
@@ -352,6 +352,13 @@ app.controller("mainController", function ($scope, $http, $sce, $q, $timeout, pr
           $scope.move(discussion);
         });
     }
+    else if ($scope.currentList.isTeam !== getList(discussion.queue_id).isTeam) {
+      $http.post(discussion.href + "/queue?queue=" + discussion.queue_id, "")
+        .success(function (x) {
+          $scope.smashStats.smash();
+          $scope.move(discussion);
+        });
+    }
     else if (discussion.queue_id != "") {
       $http.post(discussion.href + "/unqueue?queue=" + $scope.currentList.id, "")
         .success(function (unqueue) {
@@ -407,6 +414,24 @@ app.controller("mainController", function ($scope, $http, $sce, $q, $timeout, pr
     return promises;
   }
 
+  function getList(listId) {
+    if ($scope.myList.id === listId.toString()) {
+      return $scope.myList;
+    }
+    return $scope.lists[listId];
+  }
+
+  function getHumanOrFirst(queueList) {
+    var humans = _.each(queueList, function(q) {
+      var list = getList(q);
+      if (!list.isTeam) {
+        return q;
+      }
+    });
+
+    return queueList[0];
+  }
+
   $scope.reload = function () {
     $scope.currentDiscussion = null;
     $scope.currentList = null;
@@ -448,13 +473,15 @@ app.controller("mainController", function ($scope, $http, $sce, $q, $timeout, pr
                 $scope.myList = {
                   id: q.id,
                   discussions: [],
-                  name: q.name
+                  name: q.name,
+                  isTeam: q.user_id === null
                 };
               } else {
                 $scope.lists[q.id] = {
                   id: q.id,
                   discussions: [],
-                  name: q.name
+                  name: q.name,
+                  isTeam: q.user_id === null
                 };
               }
             });
@@ -503,7 +530,7 @@ app.controller("mainController", function ($scope, $http, $sce, $q, $timeout, pr
                   });
 
                   if (data.cached_queue_list.length > 0) {
-                    data.queue_id = data.cached_queue_list[0];
+                    data.queue_id = getHumanOrFirst(data.cached_queue_list);
                   } else {
                     data.queue_id = "";
                   }
