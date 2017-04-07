@@ -503,7 +503,7 @@ app.controller("mainController", function ($scope, $http, $sce, $q, $timeout, pr
                   });
 
                   if (data.cached_queue_list.length > 0) {
-                    data.queue_id = data.cached_queue_list[data.cached_queue_list.length - 1];
+                    data.queue_id = data.cached_queue_list[0];
                   } else {
                     data.queue_id = "";
                   }
