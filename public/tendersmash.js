@@ -422,14 +422,12 @@ app.controller("mainController", function ($scope, $http, $sce, $q, $timeout, pr
   }
 
   function getHumanOrFirst(queueList) {
-    var humans = _.each(queueList, function(q) {
+    var human = _.find(queueList, function(q) {
       var list = getList(q);
-      if (!list.isTeam) {
-        return q;
-      }
+      return !list.isTeam;
     });
 
-    return queueList[0];
+    return human || queueList[0];
   }
 
   $scope.reload = function () {
@@ -546,7 +544,6 @@ app.controller("mainController", function ($scope, $http, $sce, $q, $timeout, pr
                 });
 
                 $scope.smashStats.total += $scope.myList.discussions.length;
-
               });
 
             });
