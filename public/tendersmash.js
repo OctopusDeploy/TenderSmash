@@ -394,6 +394,22 @@ app.controller("mainController", function ($scope, $http, $sce, $q, $timeout, pr
       });
   }
 
+  $scope.getQueues = function (baseUrl, currentPage) {
+    if (!currentPage) currentPage = 1;
+    return $http.get(baseUrl + "?page=" + currentPage)
+      .then(function (currentPageResponse) {
+        if (currentPageResponse.data.named_queues && currentPageResponse.data.named_queues.length > 0) {
+          return $scope.getQueues(baseUrl, currentPage + 1)
+            .then(function (nextPage) {
+              var queues = currentPageResponse.data.named_queues.concat(nextPage);
+              return queues;
+            });
+        } else {
+          return [];
+        }
+      });
+  }
+
   $scope.getDiscussions = function (discussions) {
     var promises = [];
     _.each(discussions, function (discussion) {
@@ -450,8 +466,10 @@ app.controller("mainController", function ($scope, $http, $sce, $q, $timeout, pr
         });
     }
 
-    $http.get('https://api.tenderapp.com/' + profileManager.profile.tenderUri + '/queues')
-      .success(function (queues) {
+    var baseUrl = 'https://api.tenderapp.com/' + profileManager.profile.tenderUri + '/queues';
+
+    $scope.getQueues(baseUrl)
+      .then(function(queues) {
         $http.get('https://api.tenderapp.com/' + profileManager.profile.tenderUri + '/discussions/pending')
           .success(function (pendingDiscussionListing) {
             console.log(pendingDiscussionListing);
@@ -464,7 +482,7 @@ app.controller("mainController", function ($scope, $http, $sce, $q, $timeout, pr
               name: 'Unassigned'
             };
 
-            _.each(queues.named_queues, function (q) {
+            _.each(queues, function (q) {
               q.id = q.href.substring(q.href.lastIndexOf('/') + 1);
 
               if (q.user_id == profileManager.profile.id) {
