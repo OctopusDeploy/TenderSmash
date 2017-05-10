@@ -182,7 +182,7 @@
                 <div style="text-align: right">
                   <select ng-model="currentDiscussion.queue_id">
                     <option value="">(Unassigned)</option>
-                    <option ng-repeat="queue in queues.named_queues" value="{{queue.id}}">{{ queue.name }}</option>
+                    <option ng-repeat="queue in queues" value="{{queue.id}}">{{ queue.name }}</option>
                   </select>
                   <button class="btn btn-primary" ng-click="assign(currentDiscussion)">Assign</button>
                 </div>
