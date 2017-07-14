@@ -430,6 +430,11 @@ app.controller("mainController", function ($scope, $http, $sce, $q, $timeout, pr
     return promises;
   }
 
+  $scope.getOrderedLists = function() {
+    var sorted = _.sortBy($scope.lists, function(x) { return x.name; });
+    return sorted;
+  }
+
   function getList(listId) {
     if ($scope.myList.id === listId.toString()) {
       return $scope.myList;
