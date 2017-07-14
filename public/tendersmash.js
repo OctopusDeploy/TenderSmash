@@ -431,7 +431,8 @@ app.controller("mainController", function ($scope, $http, $sce, $q, $timeout, pr
   }
 
   $scope.getOrderedLists = function() {
-    var sorted = _.sortBy($scope.lists, function(x) { return x.name; });
+    var sorted = _.sortBy(_.filter($scope.lists, function(x){ return x.name.toLowerCase().startsWith('area/'); }), function(x) { return x.name.toLowerCase(); });
+    sorted = _.union(sorted, _.sortBy(_.filter($scope.lists, function(x){ return !x.name.toLowerCase().startsWith('area/'); }), function(x) { return x.name.toLowerCase(); }));
     return sorted;
   }
 
