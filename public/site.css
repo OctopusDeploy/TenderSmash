@@ -1,0 +1,24 @@
+body {
+    padding-top: 70px;
+  }
+  .list-group-item.active small {
+    color: #fff;
+  }
+  @media screen and (max-height: 1024px) {
+    .scrollable-menu {
+      height: auto;
+      max-height: 700px;
+      overflow-x: hidden;
+    }
+  }
+  @media screen and (max-height: 768px) {
+    .scrollable-menu {
+      height: auto;
+      max-height: 400px;
+      overflow-x: hidden;
+    }
+  }
+.internalReplyBox {
+    background-color: #faebcc;
+    font-weight: bold;
+}

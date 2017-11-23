@@ -13,6 +13,7 @@
 
   <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.5/css/bootstrap.min.css" integrity="sha512-dTfge/zgoMYpP7QbHy4gWMEGsbsdZeCXz7irItjcC3sPUFtf0kuFbDz/ixG7ArTxmDjLXDmezHubeNikyKGVyQ==" crossorigin="anonymous">
   <link rel="stylesheet" href="/vendor/loading-bar.min.css">
+  <link rel="stylesheet" href="site.css">
 
   <script src="//ajax.googleapis.com/ajax/libs/jquery/2.0.3/jquery.min.js"></script><!-- load jquery -->
   <script src="//netdna.bootstrapcdn.com/bootstrap/3.1.1/js/bootstrap.min.js"></script>
@@ -22,30 +23,7 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.10.6/moment.min.js"></script>
   <script src="/vendor/loading-bar.min.js"></script>
   <script src="/vendor/localstorageservice.min.js"></script>
-  <script src="/tendersmash.js"></script>
-  <style type="text/css">
-    body {
-      padding-top: 70px;
-    }
-    .list-group-item.active small {
-      color: #fff;
-    }
-
-    @media screen and (max-height: 1024px) {
-      .scrollable-menu {
-        height: auto;
-        max-height: 700px;
-        overflow-x: hidden;
-      }
-    }
-    @media screen and (max-height: 768px) {
-      .scrollable-menu {
-        height: auto;
-        max-height: 400px;
-        overflow-x: hidden;
-      }
-    }
-  </style>
+  <script src="/tendersmash.js"></script>  
 </head>
 
 <body ng-controller="mainController">
@@ -185,13 +163,14 @@
             </div>
             <div class="panel-body">
               <div>
-                <textarea id="reply_box" class="form-control" rows="10" ng-model="currentDiscussion.reply"></textarea>
+                <textarea id="reply_box" ng-class="{'internalReplyBox' : isInternalDiscussion}" class="form-control" rows="10" ng-model="currentDiscussion.reply"></textarea>
               </div>
 
               <div style="margin-top: 10px">
-                <div style="float: left">
-                  <button class="btn btn-success" ng-click="reply(currentDiscussion)">Reply</button>
+                <div style="float: left">                  
+                  <button ng-class="{'btn-warning' : isInternalDiscussion}" class="btn btn-success" ng-click="reply(currentDiscussion)">{{isInternalDiscussion ? 'Reply Internally' : 'Reply Publicly'}}</button>
                   <button class="btn btn-primary" ng-click="ack(currentDiscussion)">Acknowledge</button>
+                  <input type="checkbox" ng-model="isInternalDiscussion"> Is Internal Comment </input>
                 </div>
 
                 <div style="text-align: right">
