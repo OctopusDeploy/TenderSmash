@@ -139,7 +139,7 @@
 
       <div class="col-md-9">
         <div ng-show="currentDiscussion" class="current-discussion">
-          <div class="panel panel-primary" style="background: #d9edf7">
+          <div ng-class="isInternalDiscussion ? 'internalReplyContainer' : 'publicReplyContainer'" class="panel panel-primary">
             <div class="panel-heading">
               <h3 class="panel-title">Reply
                 <span style="color: #ebf6ff; margin-left: 10px; margin-right: 10px">
@@ -163,12 +163,12 @@
             </div>
             <div class="panel-body">
               <div>
-                <textarea id="reply_box" ng-class="{'internalReplyBox' : isInternalDiscussion}" class="form-control" rows="10" ng-model="currentDiscussion.reply"></textarea>
+                <textarea id="reply_box" class="form-control" rows="10" ng-model="currentDiscussion.reply"></textarea>
               </div>
 
               <div style="margin-top: 10px">
                 <div style="float: left">                  
-                  <button ng-class="{'btn-warning' : isInternalDiscussion}" class="btn btn-success" ng-click="reply(currentDiscussion)">{{isInternalDiscussion ? 'Reply Internally' : 'Reply Publicly'}}</button>
+                  <button ng-class="{'btn-warning' : isInternalDiscussion}" class="btn btn-success" ng-click="reply(currentDiscussion)">Reply</button>
                   <button class="btn btn-primary" ng-click="ack(currentDiscussion)">Acknowledge</button>
                   <input type="checkbox" ng-model="isInternalDiscussion"> Is Internal Comment </input>
                 </div>
