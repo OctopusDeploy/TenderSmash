@@ -121,7 +121,7 @@ app.controller("mainController", function ($scope, $http, $sce, $q, $timeout, pr
   $scope.editProfile = false;
   $scope.errorManager = errorManager;
   $scope.lists = {};
-  $scope.showSummary = false;  
+  $scope.showSummary = false;
   $scope.smashStats = {
     total: 0,
     smashed: 0,
@@ -335,7 +335,7 @@ app.controller("mainController", function ($scope, $http, $sce, $q, $timeout, pr
       .success(function (data) {
         if (data.comments_count !== discussion.comments_count) {
           errorManager.setError("Someone else has commented on this item.");
-        } else {          
+        } else {
           $http.post(discussion.href + "/comments", {body: discussion.reply, skip_spam: true, internal: $scope.isInternalDiscussion})
             .success(function (x) {
               $scope.hide(discussion);

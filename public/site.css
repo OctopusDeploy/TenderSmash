@@ -18,7 +18,11 @@ body {
       overflow-x: hidden;
     }
   }
-.internalReplyBox {
-    background-color: #faebcc;
-    font-weight: bold;
+
+.internalReplyContainer{
+  background-color: #ffffe0;
+}
+
+.publicReplyContainer{
+  background-color: #d9edf7;
 }
