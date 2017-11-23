@@ -12,7 +12,7 @@
   <link rel="icon" type="image/png" href="favicon.png" />
 
   <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.5/css/bootstrap.min.css" integrity="sha512-dTfge/zgoMYpP7QbHy4gWMEGsbsdZeCXz7irItjcC3sPUFtf0kuFbDz/ixG7ArTxmDjLXDmezHubeNikyKGVyQ==" crossorigin="anonymous">
-  <link rel="stylesheet" href="/vendor/loading-bar.min.css">
+  <link rel="stylesheet" href="/vendor/loading-bar.min.css">  
 
   <script src="//ajax.googleapis.com/ajax/libs/jquery/2.0.3/jquery.min.js"></script><!-- load jquery -->
   <script src="//netdna.bootstrapcdn.com/bootstrap/3.1.1/js/bootstrap.min.js"></script>
@@ -22,7 +22,7 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.10.6/moment.min.js"></script>
   <script src="/vendor/loading-bar.min.js"></script>
   <script src="/vendor/localstorageservice.min.js"></script>
-  <script src="/tendersmash.js"></script>
+  <script src="/tendersmash.js"></script>  
   <style type="text/css">
     body {
       padding-top: 70px;
@@ -189,9 +189,10 @@
               </div>
 
               <div style="margin-top: 10px">
-                <div style="float: left">
+                <div style="float: left">                  
                   <button class="btn btn-success" ng-click="reply(currentDiscussion)">Reply</button>
                   <button class="btn btn-primary" ng-click="ack(currentDiscussion)">Acknowledge</button>
+                  <input type="checkbox" ng-model="isInternalDiscussion" ng-click="checkInternalBox()"> Is Internal Comment </input>
                 </div>
 
                 <div style="text-align: right">
