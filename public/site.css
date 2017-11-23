@@ -4,9 +4,6 @@ body {
   .list-group-item.active small {
     color: #fff;
   }
-
-  
-
   @media screen and (max-height: 1024px) {
     .scrollable-menu {
       height: auto;
@@ -21,3 +18,7 @@ body {
       overflow-x: hidden;
     }
   }
+.internalReplyBox {
+    background-color: #faebcc;
+    font-weight: bold;
+}
