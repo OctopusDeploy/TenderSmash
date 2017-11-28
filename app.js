@@ -10,6 +10,7 @@ var log = logentries.logger({
 
 var port = process.env.PORT || 3000;
 var pub = process.env.OCTO_PUBLIC || 'public';
+console.log("App runing on port", port)
 log.info("Starting on port", port);
 log.info("Public directory is", pub);
 
