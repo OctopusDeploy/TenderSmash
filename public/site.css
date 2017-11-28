@@ -26,3 +26,7 @@ body {
 .publicReplyContainer{
   background-color: #d9edf7;
 }
+
+label {
+  font-weight: normal;
+}
