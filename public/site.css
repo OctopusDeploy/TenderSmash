@@ -1,5 +1,6 @@
 body {
     padding-top: 70px;
+    overflow: hidden
   }
   .list-group-item.active small {
     color: #fff;
@@ -24,9 +25,24 @@ body {
 }
 
 .publicReplyContainer{
-  background-color: #d9edf7;
+  background-color: #d7eaf3;
 }
 
 label {
   font-weight: normal;
+}
+
+.section{
+  overflow-y: auto;
+  max-height: -webkit-fill-available;
+}
+
+.section::-webkit-scrollbar {
+  width: 5px;
+  height: 8px;
+  background-color: #d4d9db; /* or add it to the track */
+}
+
+.section::-webkit-scrollbar-thumb {
+  background: #808588; 
 }
