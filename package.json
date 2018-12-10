@@ -5,10 +5,10 @@
   "main": "main.js",
   "author": "Paul",
   "dependencies": {
+    "body-parser": "^1.18.3",
+    "cookie-parser": "^1.4.3",
     "express": "~4.16.4",
-    "body-parser": "~1.2.0",
-    "superagent": "~4.0.0",
-    "cookie-parser": "~1.1.0",
-    "node-logentries": "~0.1.4"
+    "node-logentries": "~0.1.4",
+    "superagent": "~4.0.0"
   }
 }
